@@ -1,5 +1,6 @@
 import os
 import io
+import asyncio
 import logging
 from PIL import Image
 from telegram import Update, InlineKeyboardButton, InlineKeyboardMarkup
@@ -145,7 +146,7 @@ async def handle_non_image(update: Update, context: ContextTypes.DEFAULT_TYPE) -
     )
 
 
-def main() -> None:
+async def main() -> None:
     token = os.environ.get("BOT_TOKEN")
     if not token:
         raise ValueError("BOT_TOKEN environment variable is not set!")
@@ -163,8 +164,12 @@ def main() -> None:
     )
 
     logger.info("Bot is running...")
-    app.run_polling(allowed_updates=Update.ALL_TYPES)
+    async with app:
+        await app.initialize()
+        await app.start()
+        await app.updater.start_polling(allowed_updates=Update.ALL_TYPES)
+        await asyncio.Event().wait()  # Run forever
 
 
 if __name__ == "__main__":
-    main()
+    asyncio.run(main())
